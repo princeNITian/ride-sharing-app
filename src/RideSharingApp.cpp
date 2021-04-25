@@ -37,14 +37,13 @@ public:
 
 class Rider : private Person {
 private:
-	vector<Ride> completedRides;
-	Ride currentRide;
+	vector<Ride> allRides;
 public:
 	Rider(string);
 	void createRide(int , int , int, int);
 	void updateRide(int , int, int, int);
 	void withdrawRide(int);
-	int closeRide();
+	int closeRide(int);
 
 };
 
@@ -107,52 +106,70 @@ void Rider::createRide(int id,int origin, int dest, int seats){
 		return ;
 	}
 
+	Ride currentRide;
 	currentRide.setId(id);
 	currentRide.setOrigin(origin);
 	currentRide.setDest(dest);
 	currentRide.setSeats(seats);
 	currentRide.setRideStatus(RideStatus::CREATED);
+	allRides.push_back(currentRide);
 
 }
 
 void Rider::updateRide(int id,int origin, int dest, int seats){
 
-	if(currentRide.getRideStatus() == RideStatus::WITHDRAWN){
-		cout << "Can't update ride. Ride was withdrawn\n";
+	auto iter = allRides.rbegin();
+	for(; iter != allRides.rend(); ++iter){
+		if(iter->getId() == id)
+		{
+			break;
+		}
+	}
+	if(iter->getRideStatus() != RideStatus::CREATED){
+		cout << "Ride wasn't in progress. Can't update ride\n";
 		return;
 	}
-	if(currentRide.getRideStatus() == RideStatus::COMPLETED){
-		cout << "Can't update ride. Ride was completed.\n";
-		return;
-	}
-	createRide(id,origin,dest,seats);
+	iter->setOrigin(origin);
+	iter->setDest(dest);
+	iter->setSeats(seats);
 
 }
 
 void Rider::withdrawRide(int id){
 
-	if(currentRide.getId() != id){
-		cout << "Wrong ride Id as input. Can't withdraw current ride\n";
-		return ;
+	auto iter = allRides.rbegin();
+	for(; iter != allRides.rend(); ++iter){
+		if(iter->getId() == id)
+		{
+			break;
+		}
 	}
-	if(currentRide.getRideStatus() != RideStatus::CREATED)
+	if(iter->getRideStatus() != RideStatus::CREATED)
 	{
 		cout<<"Ride wasn't in progress. Can't withdraw ride\n";
 		return;
 	}
-	currentRide.setRideStatus(RideStatus::WITHDRAWN);
+	iter->setRideStatus(RideStatus::WITHDRAWN);
+	allRides.erase((iter+1).base());
 
 }
 
-int Rider::closeRide(){
+int Rider::closeRide(int id){
 
-	if(currentRide.getRideStatus() != RideStatus::CREATED){
+	auto iter = allRides.rbegin();
+	for(; iter != allRides.rend(); ++iter){
+		if(iter->getId() == id)
+		{
+			break;
+		}
+	}
+
+	if(iter->getRideStatus() != RideStatus::CREATED){
 		cout<<"Ride wasn't in progress. Can't close ride\n";
 		return 0;
 	}
-	currentRide.setRideStatus(RideStatus::COMPLETED);
-	completedRides.push_back(currentRide);
-	return currentRide.calculateFare(completedRides.size()>=10);
+	iter->setRideStatus(RideStatus::COMPLETED);
+	return iter->calculateFare(allRides.size()>=10);
 }
 
 
@@ -161,22 +178,22 @@ int main(){
 	Driver driver("Rehman");
 
 	rider.createRide(1,50,60,1);
-	cout<<rider.closeRide()<<endl;
+	cout<<rider.closeRide(1)<<endl;
 	rider.updateRide(1,50,60,2);
-	cout<<rider.closeRide()<<endl;
+	cout<<rider.closeRide(1)<<endl;
 
 	cout<<"**************************************************"<<endl;
 
 	rider.createRide(1,50,60,1);
 	rider.withdrawRide(1);
 	rider.updateRide(1,50,60,2);
-	cout<<rider.closeRide()<<endl;
+	cout<<rider.closeRide(1)<<endl;
 
 	cout<<"****************************************************"<<endl;
 
 	rider.createRide(1,50,60,1);
 	rider.updateRide(1, 50, 60, 2);
-	cout<<rider.closeRide()<<endl;
+	cout<<rider.closeRide(1)<<endl;
 
 	return 0;
 }
